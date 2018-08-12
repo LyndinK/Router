@@ -30,7 +30,7 @@ function add_point(url){
   let lon = JSON.stringify(data[0]['lon']).slice(1,-1);
      document.getElementById("result").innerHTML +='<strong><p>' + lat+' '+ lon +'</p></strong>';
       document.getElementById("wp").value = "";
-    road_req+=(lat+','+lon+';');
+    road_req+=(lon+','+lat+';');
       L.marker([lat,lon]).addTo(mymap);
     count++;
   }).catch(function(error) {  
@@ -50,16 +50,16 @@ document.getElementById('add').addEventListener('click', req);
 
 function req_stats(){
   no_more_add=true;
-  console.log(road_req.slice(0,-1)+'?geometries=geojson&overview=full&access_token='+token);
+  console.log(road_req.slice(0,-1)+'?overview=full&access_token='+token);
   if (count>=2 && no_more_req == false){
-    fetch(road_req.slice(0,-1)+'?geometries=geojson&overview=full&access_token='+token)  
+    fetch(road_req.slice(0,-1)+'?overview=full&access_token='+token)  
   .then(status)  
   .then(json)  
   .then(function(data){
       console.log('Route request succeeded with JSON response', data);
       document.getElementById("stats").innerHTML +='<strong><p>'+"the distance is "+JSON.stringify(data['routes'][0]['distance'])+'</p></strong>';
       document.getElementById("stats").innerHTML +='<strong><p>'+"the duration is "+JSON.stringify(data['routes'][0]['duration'])+'</p></strong>';
-      var polyline = L.polyline(data['routes'][0]['geometry']['coordinates'], {color:'black'}).addTo(mymap);
+      var polyline = L.polyline(decode(data['routes'][0]['geometry']), {color:'black'}).addTo(mymap);
       mymap.fitBounds(polyline.getBounds());
       no_more_req = true;
     })
@@ -82,9 +82,44 @@ function onMapClick(e) {
     var marker = L.marker((e.latlng)).addTo(mymap);
     let lat= marker.getLatLng()['lat'];
     let lon = marker.getLatLng()['lng'];
-    road_req+=(lat+','+lon+';');
+    road_req+=(lon+','+lat+';');
     document.getElementById("result").innerHTML +='<strong><p>' + lat+' '+ lon +'</strong></p>';
     count++;
   }
 }
 mymap.on('click', onMapClick);
+//decoding
+function decode(encoded){
+var len = encoded.length;
+var index = 0;
+var array = [];
+var lat = 0;
+var lng = 0;
+
+while (index < len) {
+var b;
+var shift = 0;
+var result = 0;
+do {
+b = encoded.charCodeAt(index++) - 63;
+result |= (b & 0x1f) << shift;
+shift += 5;
+} while (b >= 0x20);
+var dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+lat += dlat;
+
+shift = 0;
+result = 0;
+do {
+b = encoded.charCodeAt(index++) - 63;
+result |= (b & 0x1f) << shift;
+shift += 5;
+} while (b >= 0x20);
+var dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+lng += dlng;
+
+array.push([lat * 1e-5, lng * 1e-5]);
+}
+
+return array;
+}
