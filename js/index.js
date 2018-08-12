@@ -58,7 +58,7 @@ function req_stats(){
   .then(function(data){
       console.log('Route request succeeded with JSON response', data);
       document.getElementById("stats").innerHTML +='<strong><p>'+"the distance is "+JSON.stringify(Math.round(data['routes'][0]['distance']/1000))+' km </p></strong>';
-      document.getElementById("stats").innerHTML +='<strong><p>'+"the duration is "+JSON.stringify(Math.round(data['routes'][0]['duration']/360))+' hours </p></strong>';
+      document.getElementById("stats").innerHTML +='<strong><p>'+"the duration is "+JSON.stringify(Math.round(data['routes'][0]['duration']/3600))+' hours </p></strong>';
       var polyline = L.polyline(decode(data['routes'][0]['geometry']), {color:'black'}).addTo(mymap);
       mymap.fitBounds(polyline.getBounds());
       no_more_req = true;
